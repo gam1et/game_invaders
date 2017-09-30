@@ -1,35 +1,86 @@
 $(document).ready(function(){
     var _ = {
+        idElem: 'app', // id элемента, внутри которого все создается
         countInvaders: 2,
         lvl: 1,
         kills: 0,
+        genElem: '', // элемент, к которому будут обращаться по _.idElem
+        playerName: '',
         updInfo: function(){
-            var time = $(timer).text();
-            if(_.kills%10==0 && _.kills!=0){
+            var newLvlCheck = false; // нужно чтобы повышение уровня и сообщение об этом не повторялись каждую секунду на количестве kills кратных 10
+            if(_.kills%10==0 && _.kills!=0 && _.newLvlCheck==false){
                 _.countInvaders += 2;
                 _.lvl += 1;
                 _.titleInfo('New level!');
+                _.newLvlCheck = true;
+            }
+            if( !(_.kills%10==0 && _.kills!=0) ){
+                _.newLvlCheck = false;
             }
             $(lvlCounter).text('Level: '+_.lvl+'');
             $(killCounter).text('Kills: '+_.kills+'');
         },
-        titleInfo: function(text){ // инфо по центру экрана
+        titleInfo: function(text){ // инфо по центру экрана во время боя
             var title = document.createElement('div');
             $(title).attr('id','titleInfo').text(text).css({
                 textAlign:'center',
                 fontSize:24,
                 color:'#0ecb13'
             });
-            $('#app').append(title);
+            $(_.genElem).append(title);
             $(title).animate({zoom:3,opacity:0},3000);
             setTimeout(function(){$(title).remove();},3000); // удаляем из памяти
         },
         loser:function(){
-            $('#app').remove();
-            $('body').html('<h2 style="color:#fff">YOU LOSE!</h2><p onclick="location.reload();" style="cursor:pointer;color:#fff">Replay</p>').css({background:'#000'});
+            document.body.removeChild(_.genElem);
+
+            var opinion;
+
+            var blockInfo = document.createElement('div');
+            blockInfo.style.padding = '10px 20px';
+
+            var headInfo = document.createElement('h2');
+            headInfo.innerText = 'YOU LOSE!';
+            headInfo.style.color = '#fff';
+
+            var staticInfo = document.createElement('div');
+            if(_.kills==0){
+                opinion = 'You looser';
+            }
+            else if(_.kills>0 && _.kills<10){
+                opinion = 'Not bad';
+            }
+            else{
+                opinion = 'Good job';
+            }
+            console.log(_.kills);
+
+            staticInfo.innerText = `Soldier ${_.playerName}!
+            You killed ${_.kills} invaders! ${opinion}`;
+
+            var btnInfo = document.createElement('p');
+            btnInfo.innerText = 'Replay';
+            btnInfo.style.color = '#fff';
+            btnInfo.style.cursor = 'pointer';
+            btnInfo.setAttribute('onclick','location.reload();');
+
+            blockInfo.appendChild(headInfo);
+            blockInfo.appendChild(staticInfo);
+            blockInfo.appendChild(btnInfo);
+            document.body.appendChild(blockInfo);
         },
         game:function(){
-            $('#app').css({
+            
+            // объявляем переменные интерфейса
+            var timer = document.createElement('div');
+            $(timer).text('0').css({padding:'5px'});
+            setInterval(function(){
+                var val =  $(timer).text();
+                $(timer).text(+val+1);
+                _.updInfo(); // проверка на новый уровень
+            },1000)
+
+            $(_.genElem).css({
                 height:window.innerHeight,
                 margin:'0',
                 padding:'0',
@@ -38,13 +89,13 @@ $(document).ready(function(){
                 position:'relative'
             })
             
-            $('#app').css({
+            $(_.genElem).css({
                 background: 'url(bg.jpg) repeat-x',
                 '-webkit-animation':'slide 1s linear infinite'
             })
-            $('#app').append(timer);
-            $('#app').append(lvlCounter);  
-            $('#app').append(killCounter);    
+            _.genElem.appendChild(timer);
+            _.genElem.appendChild(lvlCounter);  
+            _.genElem.appendChild(killCounter);    
 
             // корабль игрока
             var ship = document.createElement('div');
@@ -69,7 +120,7 @@ $(document).ready(function(){
             });
             $(ship).append(shipShoot);
             
-            $('#app').append(ship); 
+            $(_.genElem).append(ship); 
             $('body').bind('keydown',function(e){
                 var posShipLeft = $(ship).offset().left,
                     posShipTop = $(ship).offset().top;
@@ -81,7 +132,7 @@ $(document).ready(function(){
                 }
                 if(e.which==32){ // выстрел
                     shipShoot= $(shipShoot).detach().css({left:posShipLeft+24,bottom:30});
-                    $('#app').append(shipShoot);
+                    $(_.genElem).append(shipShoot);
                     $('.inv').each(function(i,inv){
                         var invPosLeft = $(inv).css('left').replace('px','');
                         var invPosTop = $(inv).css('top').replace('px','');
@@ -109,18 +160,22 @@ $(document).ready(function(){
                         min = 0, max = window.innerWidth,
                         posY = Math.round(Math.random()*(max-min)+min);
                     $(invader).css({width:'24px',height:'17px',background:'url(invader.png)',position:'absolute',top:-40,left:posY}).addClass('inv');
-                    $('#app').append(invader);
+                    $(_.genElem).append(invader);
                     $(invader).animate({top:window.innerHeight}, speed);
                     setTimeout(function(){ // удаляем элемент захватчика из DOM
-                        console.log('del');
                         $(invader).remove();
                     },5000)
                 }
 
-                $('body').on('mouseover','.inv',function(){
+                $('.inv').one('mouseover',function(){
                     _.loser();
                 })
             },3000);
+        },
+        init: function(){
+            var genElem = document.getElementById(_.idElem);
+            _.genElem = genElem;
+            _.welcome();
         },
         welcome:function(){
             var input = document.createElement('input'),
@@ -155,7 +210,7 @@ $(document).ready(function(){
                 backgroundColor:'#333'
             }).text('Confirm!');
             $(block).append(label,input,confirm);
-            $('#app').append(block);
+            $(_.genElem).append(block);
             $(input).focus();
 
             $(document).on('input',input,function(){
@@ -170,20 +225,12 @@ $(document).ready(function(){
                 if(e.which==13) $(confirm).trigger('click');
             })
             $(confirm).click(function(){
+                _.playerName = $(input).val();
                 _.game();
                 $(block).remove();
             });
         }
     }
-
-    // объявляем переменные интерфейса
-    var timer = document.createElement('div');
-    $(timer).text('0').css({padding:'5px'});
-    setInterval(function(){
-        var val =  $(timer).text();
-        $(timer).text(+val+1);
-        _.updInfo(); // проверка на новый уровень
-    },1000)
 
     var lvlCounter = document.createElement('div');
     $(lvlCounter).text('Level: '+_.lvl).css({padding:'5px'});
@@ -192,5 +239,5 @@ $(document).ready(function(){
     $(killCounter).text('Kills: '+_.kills).css({padding:'5px'});
 
     //_.game(); // запуск игры
-    _.welcome();
+    _.init();
 })
