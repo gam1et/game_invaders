@@ -46,7 +46,7 @@ $(document).ready(function(){
             $('#app').append(lvlCounter);  
             $('#app').append(killCounter);    
 
-            // карабль игрока
+            // корабль игрока
             var ship = document.createElement('div');
             $(ship).attr('id','ship').css({
                 width:'60px',
@@ -80,7 +80,7 @@ $(document).ready(function(){
                     $(ship).css({left:posShipLeft+15});
                 }
                 if(e.which==32){ // выстрел
-                    shipShoot= $(shipShoot).detach().css({left:posShipLeft+24,top:-250});
+                    shipShoot= $(shipShoot).detach().css({left:posShipLeft+24,bottom:30});
                     $('#app').append(shipShoot);
                     $('.inv').each(function(i,inv){
                         var invPosLeft = $(inv).css('left').replace('px','');
@@ -165,6 +165,9 @@ $(document).ready(function(){
                 }else{
                     $(confirm).hide();
                 }
+            })
+            $(input).keypress(function(e){ // принимаем имя по нажатию enter
+                if(e.which==13) $(confirm).trigger('click');
             })
             $(confirm).click(function(){
                 _.game();
