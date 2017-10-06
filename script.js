@@ -53,7 +53,6 @@ $(document).ready(function(){
             else{
                 opinion = 'Good job';
             }
-            console.log(_.kills);
 
             staticInfo.innerText = `Soldier ${_.playerName}!
             You killed ${_.kills} invaders! ${opinion}`;
@@ -70,7 +69,6 @@ $(document).ready(function(){
             document.body.appendChild(blockInfo);
         },
         game:function(){
-            
             // объявляем переменные интерфейса
             var timer = document.createElement('div');
             $(timer).text('0').css({padding:'5px'});
@@ -121,14 +119,15 @@ $(document).ready(function(){
             $(ship).append(shipShoot);
             
             $(_.genElem).append(ship); 
-            $('body').bind('keydown',function(e){
+            $('body').on('keydown',function(e){
                 var posShipLeft = $(ship).offset().left,
                     posShipTop = $(ship).offset().top;
+
                 if(e.which==37){ // влево
-                    $(ship).css({left:posShipLeft-15});
+                    $(ship).css({left:posShipLeft-15,background:'url(shipL.png) no-repeat'});
                 }
                 if(e.which==39){ // вправо
-                    $(ship).css({left:posShipLeft+15});
+                    $(ship).css({left:posShipLeft+15,background:'url(shipR.png) no-repeat'});
                 }
                 if(e.which==32){ // выстрел
                     shipShoot= $(shipShoot).detach().css({left:posShipLeft+24,bottom:30});
@@ -149,22 +148,41 @@ $(document).ready(function(){
                             _.updInfo;
                         }
                     })
-                    $(shipShoot).show().fadeOut(500); // визуализация выстрела
+                    $(shipShoot).show().fadeOut(300); // визуализация выстрела
                 }
+            })
+            $('body').keyup(function(){
+                $(ship).css({background:'url(ship.png) no-repeat'});
             })
 
             setInterval(function(){
                 for(var i = 0; i<_.countInvaders; i++){
-                    var invader = document.createElement('div'),
-                        speed =  Math.round(Math.random()*(7000-3000)+4000), // скорость инведеров
-                        min = 0, max = window.innerWidth,
-                        posY = Math.round(Math.random()*(max-min)+min);
-                    $(invader).css({width:'24px',height:'17px',background:'url(invader.png)',position:'absolute',top:-40,left:posY}).addClass('inv');
-                    $(_.genElem).append(invader);
-                    $(invader).animate({top:window.innerHeight}, speed);
-                    setTimeout(function(){ // удаляем элемент захватчика из DOM
-                        $(invader).remove();
-                    },5000)
+                    var chance = Math.round(Math.random()*(100-0)+1), // шанс вывода зеленого инвейдера
+                        invaderType;
+                        dataInvader = new Object();
+
+                    if(chance<20){
+                        invaderType = 'invaderG';
+                    }else{
+                        invaderType = 'invaderR';
+                    }
+                    dataInvader['invaderType']=invaderType;
+
+                    createInvader(dataInvader);
+                    function createInvader(dataInvader){
+                        var invaderType = dataInvader['invaderType'];
+                        var invader = document.createElement('div'),
+                            speed =  Math.round(Math.random()*(7000-3000)+4000), // скорость инвейдеров
+                            min = 0, max = window.innerWidth,
+                            posY = Math.round(Math.random()*(max-min)+min);
+
+                        $(invader).css({width:'24px',height:'17px',background:'url('+invaderType+'.png)',position:'absolute',top:-40,left:posY}).addClass('inv');
+                        $(_.genElem).append(invader);
+                        $(invader).animate({top:window.innerHeight}, speed);
+                        setTimeout(function(){ // удаляем элемент захватчика из DOM
+                            $(invader).remove();
+                        },5000)
+                    }
                 }
 
                 $('.inv').one('mouseover',function(){
